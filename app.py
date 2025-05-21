@@ -4,12 +4,13 @@ from model import GenderClassifier
 import os
 
 app = Flask(__name__)
-CORS(app)  # Permite cereri CORS din aplicația React
+# Permite cereri de la aplicația Netlify și oricare altă sursă în timpul dezvoltării
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Inițializează modelul
 classifier = GenderClassifier()
 
-# Încarcă modelul dacă există, altfel antrenează un model nou
+# Încarcă modelul dacă există, altfel afișează un mesaj de eroare
 if os.path.exists('model.joblib') and os.path.exists('vectorizer.joblib'):
     classifier.load('model.joblib', 'vectorizer.joblib')
     print("Model încărcat cu succes!")
@@ -31,5 +32,15 @@ def predict_gender():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# Adăugăm un endpoint simplu pentru verificare
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({
+        "status": "online",
+        "message": "API pentru clasificarea numelor este activ",
+        "example": "Trimite un POST la /predict-gender cu {'name': 'Ana'}"
+    })
+
+# Nu mai este nevoie de această parte când folosim Gunicorn sau alt WSGI server
+# if __name__ == '__main__':
+#    app.run(host='0.0.0.0', port=5000, debug=True)
